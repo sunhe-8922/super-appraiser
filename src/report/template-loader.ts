@@ -11,7 +11,7 @@ export class TemplateLoader {
   private customDir?: string;
 
   constructor(builtinDir?: string, customDir?: string) {
-    this.builtinDir = builtinDir ?? path.join(__dirname, 'templates');
+    this.builtinDir = builtinDir ?? path.join(__dirname, '..', '..', 'templates');
     this.customDir = customDir;
   }
 

@@ -93,8 +93,8 @@ describe('ReportEngine', () => {
     const report = engine.generate(ctx, { style: 'tabular', format: 'markdown' });
 
     expect(report.style).toBe('tabular');
-    expect(report.content).toContain('单宗房地产估价结果');
-    expect(report.content).toContain('估价结果报告');
+    expect(report.content).toContain('估价报告（表格式）');
+    expect(report.content).toContain('多宗房地产估价结果对比表');
     expect(report.content).toContain('抵押价值');
     expect(report.content.length).toBeGreaterThan(500);
   });
