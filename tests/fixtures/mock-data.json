@@ -1,0 +1,32 @@
+{
+  "residential": {
+    "demand": {
+      "purpose": "mortgage",
+      "valueType": "marketValue",
+      "valueDatePoint": { "date": "2026-07-04", "type": "present" },
+      "client": { "name": "测试委托人", "type": "individual" }
+    },
+    "estObject": {
+      "propertyType": "residential",
+      "subType": "apartment",
+      "location": {
+        "city": "北京",
+        "district": "朝阳区",
+        "street": "建国路",
+        "community": "示例小区"
+      },
+      "area": { "constructionArea": 89.5 },
+      "physical": {
+        "structure": "钢筋混凝土",
+        "yearBuilt": 2015,
+        "condition": "完好",
+        "decoration": "中等装修"
+      },
+      "rights": {
+        "landUseType": "住宅",
+        "landUseTermEnd": "2083-05-15",
+        "ownership": "私有"
+      }
+    }
+  }
+}

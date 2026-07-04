@@ -1,0 +1,30 @@
+{
+  "$schema": "./config-schema.json",
+  "appName": "Super-Appraiser",
+  "version": "0.1.0",
+  "standard": "GB/T 50291-2015",
+  "defaultDataSource": "kimibrIDGE",
+  "fallbackDataSource": "mock",
+  "defaultReportStyle": "narrative",
+  "defaultOutputFormat": "markdown",
+  "dataCacheTTL": 86400000,
+  "validation": {
+    "enforceAmplitudeLimits": true,
+    "enforceMethodCount": true
+  },
+  "report": {
+    "agencyName": "待填",
+    "reportNumberPrefix": "SA"
+  },
+  "dataSources": {
+    "kimibrIDGE": {
+      "enabled": true,
+      "cacheTTL": 86400000,
+      "targets": ["lianjia", "anjuke", "gov"]
+    },
+    "mock": {
+      "enabled": true,
+      "seed": "cn-beijing-2026"
+    }
+  }
+}
