@@ -1,7 +1,7 @@
 {
   "name": "super-appraiser",
   "version": "0.1.0",
-  "description": "房地产估价插件系统 - 基于GB/T 50291-2015",
+  "description": "AI-driven real estate valuation engine following GB/T 50291-2015",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -16,15 +16,43 @@
       }
     }
   },
+  "files": [
+    "dist/",
+    "templates/",
+    "scripts/",
+    "config/"
+  ],
+  "keywords": [
+    "real-estate",
+    "appraisal",
+    "valuation",
+    "gb-t-50291",
+    "china-real-estate",
+    "comparable-method",
+    "income-method",
+    "cost-method",
+    "mustache",
+    "pipeline"
+  ],
+  "homepage": "https://github.com/sunhe-8922/super-appraiser",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sunhe-8922/super-appraiser.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sunhe-8922/super-appraiser/issues"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "build": "tsc",
     "test": "jest",
     "dev": "ts-node src/index.ts"
   },
   "dependencies": {
-    "axios": "^1.7.0",
     "mustache": "^4.2.0",
-    "puppeteer": "^23.0.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {
