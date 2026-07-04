@@ -1,5 +1,9 @@
 # Super-Appraiser — 房地产估价插件系统
 
+[![GitHub](https://img.shields.io/badge/github-sunhe--8922%2Fsuper--appraiser-8da0cb?style=flat&logo=github)](https://github.com/sunhe-8922/super-appraiser)
+[![npm version](https://img.shields.io/npm/v/super-appraiser?style=flat)](https://www.npmjs.com/package/super-appraiser)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat)](LICENSE)
+
 基于 GB/T 50291-2015《房地产估价规范》的 AI 驱动房地产估价插件系统。
 
 ## 特性
