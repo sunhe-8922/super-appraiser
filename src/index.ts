@@ -62,5 +62,11 @@ export type {
   DemandClarityResult,
 } from './types';
 
+export {
+  KimiBridgeAdapter,
+  MockAdapter,
+  type DataSourceAdapter,
+} from './data';
+
 // Re-export all types from a single entry
 export * from './types';

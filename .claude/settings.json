@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -sL *)",
+      "Bash(curl -s *)",
+      "Bash(~/.kimi-webbridge/bin/kimi-webbridge status *)",
+      "Bash(claude plugin list *)"
+    ]
+  }
+}
