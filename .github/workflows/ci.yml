@@ -29,8 +29,7 @@ jobs:
         run: npm run build
 
       - name: Run tests
-        run: npx jest --ci --reporters=default --reporters=jest-junit
-        continue-on-error: ${{ matrix.node-version == '18.x' }}
+        run: npx jest --ci
 
   lint:
     runs-on: ubuntu-latest
