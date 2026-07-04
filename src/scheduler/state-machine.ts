@@ -28,6 +28,7 @@ export class EstimationStateMachine {
 
   /**
    * 允许的状态转移表
+   * report_review 可回退到 report_generation（审核不通过需修改）
    */
   private readonly transitions: Record<EstimationStage, EstimationStage[]> = {
     'demand_clarity': ['estimation_plan'],
@@ -38,7 +39,7 @@ export class EstimationStateMachine {
     'calculation': ['result_determination'],
     'result_determination': ['report_generation'],
     'report_generation': ['report_review'],
-    'report_review': ['delivery'],
+    'report_review': ['delivery', 'report_generation'], // 审核通过→交付；不通过→退回重写
     'delivery': ['archive'],
     'archive': [], // 终态
   };

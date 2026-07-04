@@ -1,6 +1,12 @@
 {
   "permissions": {
     "allow": [
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(npx jest *)",
+      "Bash(npx tsc *)",
+      "Bash(node scripts/*)",
+      "Bash(node -e *)",
       "Bash(curl -sL *)",
       "Bash(curl -s *)",
       "Bash(~/.kimi-webbridge/bin/kimi-webbridge status *)",
@@ -8,3 +14,4 @@
     ]
   }
 }
+

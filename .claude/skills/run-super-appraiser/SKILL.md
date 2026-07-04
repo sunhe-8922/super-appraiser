@@ -7,10 +7,11 @@ description: run, build, smoke-test, and drive the Super-Appraiser real estate v
 
 Super-Appraiser is a TypeScript library that performs real estate valuation following GB/T 50291-2015. It has no GUI — drive it via the `scripts/smoke-test.mjs` smoke test or by importing `EstimationPipeline`.
 
+Paths in this skill are relative to `<unit>/` (the `super-appraiser/` directory).
+
 ## Prerequisites
 
 ```bash
-cd d:\gujia估价\super-appraiser
 npm install
 ```
 
@@ -38,19 +39,20 @@ This runs a full end-to-end pipeline with `MockAdapter` and prints the generated
 
 ## Direct Invocation (agent path)
 
-Import from `dist/index.js` (or `src/index.ts` via `ts-node`):
+Use the compiled `dist/` via CommonJS require (ts-node ESM import fails on Node 20+ due to cycle/module resolution issues):
 
 ```bash
-npx ts-node -e '
-import { EstimationPipeline, MockAdapter } from "./src";
-const pipeline = new EstimationPipeline({ dataSource: new MockAdapter() });
-const report = await pipeline.run({
+node -e '
+const { EstimationPipeline, MockAdapter } = require("./dist/index.js");
+const p = new EstimationPipeline({ dataSource: new MockAdapter() });
+p.run({
   demand: { purpose: "mortgage", valueType: "marketValue", client: { name: "Test", type: "individual" }, valueDatePoint: { date: new Date(), type: "present" } },
   estObject: { propertyType: "residential", subType: "apartment", location: { city: "北京", district: "朝阳区", street: "建国路", community: "小区" }, area: { constructionArea: 89.5 }, physical: { structure: "钢筋混凝土", yearBuilt: 2015, condition: "完好", decoration: "精装", facilities: [] }, rights: { landUseType: "住宅", landUseTermEnd: new Date("2083-05-15"), ownership: "私有", restrictions: [] } },
-});
-console.log(report.content.substring(0, 500));
+}).then(r => console.log("Report length:", r.content.length));
 '
 ```
+
+Expected output: `Report length: 1802` (approx, varies with date).
 
 ## Run: Human Path
 
@@ -70,7 +72,9 @@ Expect 24/24 tests passing.
 
 ## Gotchas
 
+- **`ts-node` direct import does not work on Node 20+** — `npx ts-node -e 'import ... from "./src"'` produces no output (silent failure due to ESM/CommonJS interop). Use `require("./dist/index.js")` instead.
 - **`MockAdapter` not in barrel export by default** — if importing from `dist/index.js`, the export is there. If using `ts-node` from source, ensure you import from `"./src"` not `"./src/index"` (the latter may not re-export data adapters depending on the build state).
 - **`parallelCalculation` flag is ignored** — the pipeline currently runs all methods sequentially regardless of this flag (known limitation, tracked as TODO).
 - **Report content starts with `## 致…函`** — the cover mustache template renders but the narrative cover section is empty in the final output because the cover template has no `{{#narrative}}` guard. The report is still valid; the cover table is embedded in the letter section.
 - **Chinese text in files** — Windows Git may convert LF→CRLF. This does not affect runtime but may cause diff noise.
+- **`npm run dev` is a dead end** — it runs `ts-node src/index.ts` which has no standalone CLI logic (just a stub). Use the smoke test or direct invocation instead.
