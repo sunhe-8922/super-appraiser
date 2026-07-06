@@ -216,65 +216,101 @@ export class ReportEngine {
   }
 
   /**
-   * 大写金额转换
-   * 处理边界情况：0、负数（取绝对值）、小数位
+   * 大写金额转换。
+   * 支持到亿位的整数 + 角分小数。覆盖估价报告实际范围（千元 → 数十亿元）。
+   *
+   * 实现思路：4 位一段，每段内部用拾/佰/仟，段间用'万'/'亿'。
    */
   private numberToChineseCurrency(amount: number): string {
     if (amount === 0) return '零元整';
 
-    const digits = '零壹贰叁肆伍陆柒捌玖';
-    const units = ['元', '角', '分', '厘'];
+    const DIGITS = '零壹贰叁肆伍陆柒捌玖';
+    const SEC_UNITS = ['', '拾', '佰', '仟'];     // 段内位（个/拾/佰/仟）
+    const BIG_UNITS = ['', '万', '亿', '万亿'];   // 段间单位
 
-    // 取绝对值处理
-    const absAmount = Math.abs(amount);
-    const integerPart = Math.floor(absAmount);
-    const decimalPart = Math.round((absAmount - integerPart) * 100);
+    const abs = Math.abs(amount);
+    const integerPart = Math.floor(abs);
+    const decimalPart = Math.round((abs - integerPart) * 100); // 角分 = 0..99
 
-    // 整数部分转换
-    let result = '';
-    if (integerPart === 0) {
-      result = '零';
-    } else {
-      const numStr = integerPart.toString();
-      let zeroFlag = false; // 是否已在结果末尾添加过"零"
-      for (let i = 0; i < numStr.length; i++) {
-        const digit = parseInt(numStr[i]);
-        const pos = numStr.length - 1 - i; // 从低位算起的位置
-        if (digit === 0) {
-          if (!zeroFlag) {
-            result += '零';
-            zeroFlag = true;
-          }
-        } else {
-          result += digits[digit];
-          // 添加单位（个位不加单位，由"元"代替）
-          if (pos > 0) {
-            const unitIdx = pos - 1;
-            if (unitIdx < 4) {
-              result += ['拾', '佰', '仟', '万'][unitIdx] ?? '';
-            }
-          }
-          zeroFlag = false;
-        }
+    // 把整数切成 4 位一组（从低位到高位）
+    const groups: number[] = [];
+    let n = integerPart;
+    while (n > 0) {
+      groups.push(n % 10000);
+      n = Math.floor(n / 10000);
+    }
+    if (groups.length === 0) groups.push(0);
+
+    // 分段渲染：每段给出非空字符串（不带前导零），段间单位的'零'占位按需要补。
+    const groupStrs: string[] = [];
+    for (let g = 0; g < groups.length; g++) {
+      const section = groups[g];
+      const bigUnit = BIG_UNITS[g] ?? '';
+
+      if (section === 0) {
+        // 整段为 0：标记为 null — 后面 join 时按上下文决定是否补'零'
+        groupStrs.push('');
+        continue;
       }
-      // 去除末尾多余的零
-      result = result.replace(/零+$/, '');
+
+      // 段内逐位（个/拾/佰/仟），从低位起算。
+      // 标准规则：
+      // - 高位的 0 不读
+      // - 中段 0 读出"零"
+      // - 末尾 0 不读
+      let sectionStr = '';
+      let lastEmittedIdx = -1;
+      for (let i = 0; i < 4; i++) {
+        const digit = Math.floor(section / Math.pow(10, i)) % 10;
+        if (digit === 0) continue;
+        // 低位和高位之间有空隙，需要'零'补位
+        if (lastEmittedIdx !== -1 && lastEmittedIdx !== i - 1) {
+          sectionStr += '零';
+        }
+        if (i > 0) sectionStr += SEC_UNITS[i] + DIGITS[digit];
+        else sectionStr += DIGITS[digit];
+        lastEmittedIdx = i;
+      }
+      sectionStr = sectionStr.split('').reverse().join('');
+      groupStrs.push(sectionStr + bigUnit);
     }
 
-    result = (result || '零') + '元';
+    // join + 智能加'零'：groups[0]=低位段，groups[N-1]=高位段。
+    // 输出顺序为高位→低位，所以从 groups.length-1 倒序遍历。
+    let joined = '';
+    let prevNonZero = false;
+    for (let g = groups.length - 1; g >= 0; g--) {
+      if (groupStrs[g]) {
+        joined += groupStrs[g];
+        prevNonZero = true;
+        continue;
+      }
+      // 当前段空：是否需要"零"占位？
+      const lastNonZero = groups[0] !== 0;
+      const lastJoinedChar = joined[joined.length - 1];
+      if (
+        prevNonZero &&
+        g > 0 &&
+        lastNonZero &&
+        lastJoinedChar !== '零'
+      ) {
+        joined += '零';
+      }
+    }
 
-    // 小数部分
+    let result = joined.replace(/零+$/, '');
+    if (!result) result = '零';
+    result += '元';
+
+    // 小数部分（角 + 分），0 分时输出"整"
     if (decimalPart === 0) {
       result += '整';
     } else {
       const jiao = Math.floor(decimalPart / 10);
       const fen = decimalPart % 10;
-      if (jiao > 0) {
-        result += digits[jiao] + '角';
-      }
-      if (fen > 0) {
-        result += digits[fen] + '分';
-      }
+      if (jiao > 0) result += DIGITS[jiao] + '角';
+      else if (fen > 0) result += '零';        // 整数有值但只有分："零"占位
+      if (fen > 0) result += DIGITS[fen] + '分';
     }
 
     return result;
