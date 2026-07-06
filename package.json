@@ -1,6 +1,6 @@
 {
   "name": "super-appraiser",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "AI-driven real estate valuation engine following GB/T 50291-2015",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -1,34 +1,45 @@
-# Super-Appraiser — 房地产估价插件系统
+# Super-Appraiser — 房地产估价引擎
 
 [![GitHub](https://img.shields.io/badge/github-sunhe--8922%2Fsuper--appraiser-8da0cb?style=flat&logo=github)](https://github.com/sunhe-8922/super-appraiser)
 [![npm version](https://img.shields.io/npm/v/super-appraiser?style=flat)](https://www.npmjs.com/package/super-appraiser)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat)](LICENSE)
+[![CI](https://img.shields.io/badge/CI-passing-brightgreen?style=flat)](https://github.com/sunhe-8922/super-appraiser/actions)
 
-基于 GB/T 50291-2015《房地产估价规范》的 AI 驱动房地产估价插件系统。
+基于 GB/T 50291-2015《房地产估价规范》的 AI 驱动房地产估价引擎。
 
-## 特性
+## 安装
 
-- **双架构**：`.claude/skills/` 下的 SKILL.md 文件供 Claude Code 加载 + `src/` 下的 TypeScript 代码供程序执行
-- **完整流程**：12 个 skill 覆盖国标 11 步估价程序
-- **多方法**：比较法、收益法、成本法，自动判断适用方法
-- **多格式**：叙述式报告（7.0.2）+ 表格式报告（7.0.17），支持 Markdown/HTML/PDF/Word 输出
-- **实时数据**：Kimi WebBridge 实时获取市场数据，Mock 数据备用
+```bash
+npm install super-appraiser
+```
 
 ## 快速开始
 
+### 命令行 demo
+
 ```bash
-npm install
-npm run build
+npx super-appraiser --demo
 ```
 
-### 使用 Pipeline
+或开发模式：
+
+```bash
+git clone https://github.com/sunhe-8922/super-appraiser.git
+cd super-appraiser
+npm install
+npm run dev -- --demo
+```
+
+输出完整叙述式估价报告（cover + letter + declaration + assumptions + resultReport + technicalReport 六段）。
+
+### 程序化调用
 
 ```typescript
 import { EstimationPipeline, MockAdapter } from 'super-appraiser';
 
 const pipeline = new EstimationPipeline({
   dataSource: new MockAdapter(),
-  reportConfig: { style: 'narrative', format: 'markdown' },
+  parallelCalculation: true,   // 默认 true
 });
 
 const report = await pipeline.run({
@@ -43,6 +54,28 @@ const report = await pipeline.run({
 
 console.log(report.content);
 ```
+
+### 真实数据（Kimi WebBridge）
+
+```typescript
+import { EstimationPipeline, KimiBridgeAdapter } from 'super-appraiser';
+
+const pipeline = new EstimationPipeline({
+  dataSource: new KimiBridgeAdapter(),   // 自动探测 ~/.kimi-webbridge
+});
+```
+
+CLI 环境变量：`SUPER_APPRAISER_DATA=kimi|mock` 强制选择数据源。
+
+## 特性
+
+- **完整流程**：覆盖国标 11 步估价程序（3.0.1）
+- **多方法**：比较法（4.2）、收益法（4.3）、成本法（4.4）—— `parallelCalculation: true` 并行执行
+- **方法选择**：自动判断（4.1），无需手动指定
+- **结果确定**：简单算术平均综合多方法结果（6.0.5）
+- **多格式报告**：叙述式（7.0.2~7.0.18）+ 表格式，单 component template 文件即改即用
+- **多数据源**：Kimi WebBridge（实时） + Mock（演示），可插拔 `DataSourceAdapter`
+- **中文化金额**：完整 4-段式中文大写（个/拾/佰/仟 + 万/亿/万亿）
 
 ## Skill 列表
 
@@ -61,19 +94,60 @@ console.log(report.content);
 | 11 | report-review | 3.0.11 | 报告审核 |
 | 12 | archive | 3.0.13~3.0.14 | 资料归档 |
 
+## CLI 选项
+
+```
+npx super-appraiser [flags]
+
+  --demo                 使用内置 fixture 数据快速演示
+  --purpose <type>       估价目的（mortgage/tax/expropriation/...）
+  --value-type <type>    价值类型（marketValue/mortgageValue/...）
+  --city <name>          城市（默认: 北京）
+  --district <name>      区域（默认: 朝阳区）
+  --area <number>        建筑面积 m²（默认: 89.5）
+  --help, -h             显示帮助
+```
+
+无参数时进入交互模式（API 极简）。
+
 ## 配置
 
-编辑 `config/appraiser.config.json` 修改默认设置。
+通过环境变量 / pipeline config 控制：
+
+```typescript
+new EstimationPipeline({
+  dataSource: new KimiBridgeAdapter(),
+  parallelCalculation: true,        // 多方法并行测算
+  // templateLoader: new TemplateLoader(customDir),  // 自定义 mustache 模板覆盖
+});
+```
 
 ## 扩展
 
 ### 自定义报告模板
 
-在 `templates/custom/` 下创建 mustache 模板文件，通过 `ReportConfig.customTemplateDir` 指定。
+复制 `templates/narrative/*.mustache` 到本地目录，传入 `TemplateLoader(customDir)`：
+
+```typescript
+import { TemplateLoader } from 'super-appraiser';
+
+const pipeline = new EstimationPipeline({
+  dataSource: new MockAdapter(),
+  templateLoader: new TemplateLoader(undefined, './my-templates'),
+});
+```
 
 ### 添加数据源
 
-实现 `DataSourceAdapter` 接口并注册到 Pipeline。
+实现 `DataSourceAdapter` 接口（5 个 fetch 方法）并注册到 Pipeline：
+
+```typescript
+import type { DataSourceAdapter } from 'super-appraiser';
+
+class MyAdapter implements DataSourceAdapter { /* ... */ }
+
+new EstimationPipeline({ dataSource: new MyAdapter() });
+```
 
 ## 规范引用
 
