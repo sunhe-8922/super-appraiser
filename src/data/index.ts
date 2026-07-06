@@ -9,5 +9,5 @@ export type {
   BenchmarkPrice,
   CostData,
 } from '../types';
-export { KimiBridgeAdapter } from './kimibridge-adapter';
+export { KimiBridgeAdapter, isKimiBridgeAvailable } from './kimibridge-adapter';
 export { MockAdapter } from './mock-adapter';

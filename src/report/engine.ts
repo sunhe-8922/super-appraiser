@@ -127,18 +127,19 @@ export class ReportEngine {
   }
 
   /**
-   * 叙述式报告各部分（7.0.2条）
+   * 叙述式报告各部分 — 返回 mustache 模板渲染出的 markdown 字符串。
+   * 实际渲染由 combineSections 从模板文件加载，本方法仅在模板缺失时作为回退。
    */
   private renderNarrativeSections(
-    _context: EstimationContext,
-    _base: Record<string, string>,
+    context: EstimationContext,
+    base: Record<string, string>,
   ): Record<string, string> {
     return {
-      letter: this.renderLetter(_base),
-      declaration: this.renderDeclaration(),
-      assumptions: this.renderAssumptions(_base),
-      resultReport: this.renderResultReport(_base),
-      technicalReport: this.renderTechnicalReport(_base),
+      letter: this.renderLetterMarkdown(base),
+      declaration: this.renderDeclarationMarkdown(),
+      assumptions: this.renderAssumptionsMarkdown(base),
+      resultReport: this.renderResultReportMarkdown(base),
+      technicalReport: this.renderTechnicalReportMarkdown(base),
     };
   }
 
@@ -164,31 +165,33 @@ export class ReportEngine {
     style: ReportStyle,
     format: ReportConfig['format'],
   ): string {
-    const templateName = style === 'narrative' ? 'cover' : 'single-property';
-    const template = this.templateLoader.load(style, templateName);
-    let output = mustache.render(template, sections);
+    let output = '';
 
-    // 附加已程序化渲染的部分（renderLetter/renderDeclaration 等返回的 markdown 字符串）
-    const partKeys = ['letter', 'declaration', 'assumptions', 'resultReport', 'technicalReport'] as const;
-    for (const key of partKeys) {
-      if (sections[key]) {
-        output += '\n' + sections[key];
+    if (style === 'narrative') {
+      // 一次加载所有部分，避免对同一模板重复 stat
+      const partKeys = ['cover', 'letter', 'declaration', 'assumptions', 'resultReport', 'technicalReport'] as const;
+      for (const part of partKeys) {
+        const template = this.templateLoader.load('narrative', part);
+        if (template) {
+          output += mustache.render(template, sections) + '\n\n';
+        } else {
+          // 模板缺失：回退到内嵌渲染（sections 中已准备好 markdown）
+          const fallback = sections[part];
+          if (fallback) output += fallback + '\n\n';
+        }
       }
+    } else {
+      // tabular: 始终使用 single-property 模板
+      const template = this.templateLoader.load('tabular', 'single-property');
+      output = template ? mustache.render(template, sections) : (sections.resultReport ?? '');
+
+      const multiTemplate = this.templateLoader.load('tabular', 'multi-property');
+      if (multiTemplate) output += mustache.render(multiTemplate, sections);
+      const mortgageTemplate = this.templateLoader.load('tabular', 'mortgage-value');
+      if (mortgageTemplate) output += mustache.render(mortgageTemplate, sections);
     }
 
-    // 表格式追加多宗和抵押模板
-    if (style === 'tabular') {
-      const multiTemplate = this.templateLoader.load(style, 'multi-property');
-      if (multiTemplate) {
-        output += mustache.render(multiTemplate, sections);
-      }
-      const mortgageTemplate = this.templateLoader.load(style, 'mortgage-value');
-      if (mortgageTemplate) {
-        output += mustache.render(mortgageTemplate, sections);
-      }
-    }
-
-    return output;
+    return output.trim();
   }
 
   // --- 辅助方法 ---
@@ -277,7 +280,7 @@ export class ReportEngine {
     return result;
   }
 
-  private renderLetter(base: Record<string, string>): string {
+  private renderLetterMarkdown(base: Record<string, string>): string {
     return `## 致${base.clientName}函
 
 ${base.clientName}：
@@ -300,7 +303,7 @@ ${base.clientName}：
 **法定代表人/执行事务合伙人：** __________`;
   }
 
-  private renderDeclaration(): string {
+  private renderDeclarationMarkdown(): string {
     // 7.0.13 鉴证性估价报告的估价师声明
     return `**注册房地产估价师声明：**
 
@@ -314,7 +317,7 @@ ${base.clientName}：
 **注册房地产估价师签名：** __________    **签名日期：** __________`;
   }
 
-  private renderAssumptions(base: Record<string, string>): string {
+  private renderAssumptionsMarkdown(base: Record<string, string>): string {
     // 7.0.16 估价假设和限制条件
     return `## 估价假设和限制条件
 
@@ -330,7 +333,7 @@ ${base.clientName}：
 3. 本报告的全部内容由${base.agencyName}负责解释。`;
   }
 
-  private renderResultReport(base: Record<string, string>): string {
+  private renderResultReportMarkdown(base: Record<string, string>): string {
     // 7.0.17 估价结果报告
     return `## 估价结果报告
 
@@ -350,7 +353,7 @@ ${base.clientName}：
 | 12 | 估价作业期 | ${base.workingPeriod} |`;
   }
 
-  private renderTechnicalReport(base: Record<string, string>): string {
+  private renderTechnicalReportMarkdown(base: Record<string, string>): string {
     // 7.0.18 估价技术报告
     return `## 估价技术报告
 

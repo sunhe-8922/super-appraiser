@@ -20,6 +20,7 @@ import {
   IncomeSkill,
   CostSkill,
   MethodSelectionSkill,
+  BaseSkill,
 } from '../skills';
 import { DataSourceAdapter } from '../data';
 
@@ -35,6 +36,16 @@ export interface PipelineInput {
   };
   estObject: EstimationContext['estObject'];
 }
+
+// Method → Skill 构造器工厂。
+// 新增方法类型时只需在此加一行，并行/串行两个分支都会自动覆盖。
+type SkillFactory = () => BaseSkill;
+const SKILL_REGISTRY: Record<string, SkillFactory> = {
+  comparable: () => new ComparableSkill(),
+  income: () => new IncomeSkill(),
+  cost: () => new CostSkill(),
+  // hypothetical 不在首期范围内
+};
 
 export class EstimationPipeline {
   private stateMachine: EstimationStateMachine;
@@ -223,16 +234,59 @@ export class EstimationPipeline {
       throw new Error('未确定估价方法，无法进行测算');
     }
 
-    // 首期简化为串行执行（各 skill 独立修改 context，暂不支持并行）
-    // TODO: 后续改为 Promise.all 并行执行各方法测算
+    if (this.parallel) {
+      // 并行：每个方法独立运行，互不污染 context.calculationResults
+      const baseContext: EstimationContext = {
+        ...context,
+        calculationResults: [], // 每个 skill 看到空数组，避免合并冲突
+      };
+
+      const taskMap = plan.methods.map((method) => {
+        const factory = SKILL_REGISTRY[method];
+        if (!factory) throw new Error(`Unsupported method: ${method}`);
+        return () => factory().execute(baseContext);
+      });
+
+      const settled = await Promise.allSettled(taskMap.map((fn) => fn()));
+
+      // 汇总所有成功的结果
+      const mergedResults: CalculationResults[] = [];
+      const errors: string[] = [];
+      for (const [i, result] of settled.entries()) {
+        if (result.status === 'fulfilled') {
+          const ctx = result.value;
+          if (ctx.calculationResults) {
+            mergedResults.push(...ctx.calculationResults);
+          }
+        } else {
+          errors.push(`${plan.methods[i]}: ${result.reason?.message ?? result.reason}`);
+        }
+      }
+
+      if (mergedResults.length === 0) {
+        throw new Error(
+          `并行测算全部失败: ${errors.join('; ')}`
+        );
+      }
+
+      if (errors.length > 0) {
+        // 部分方法失败：警告但不阻断（GB/T 50291-2015 第6章允许多方法但部分失败）
+        // eslint-disable-next-line no-console
+        console.warn(`[并行测算] 部分方法失败: ${errors.join('; ')}`);
+      }
+
+      return {
+        ...context,
+        calculationResults: mergedResults,
+      };
+    }
+
+    // 串行：保持向后兼容
     let result = context;
     for (const method of plan.methods) {
-      switch (method) {
-        case 'comparable': result = new ComparableSkill().execute(result); break;
-        case 'income': result = new IncomeSkill().execute(result); break;
-        case 'cost': result = new CostSkill().execute(result); break;
-        // hypothetical 不在首期范围内
-      }
+      const factory = SKILL_REGISTRY[method];
+      if (!factory) throw new Error(`Unsupported method: ${method}`);
+      result = factory().execute(result);
     }
     return result;
   }

@@ -1,0 +1,6 @@
+# 确保所有 .ts/.js 文件在 checkout 时保留 LF，避免 Windows CI diff noise
+*.ts text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.mustache text eol=lf

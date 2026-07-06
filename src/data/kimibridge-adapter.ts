@@ -8,6 +8,10 @@
  * - 地方政府：基准地价、房价指数
  */
 
+import { execFile } from 'node:child_process';
+import * as path from 'node:path';
+import * as os from 'node:os';
+import { promisify } from 'node:util';
 import { DataSourceAdapter, ComparableQuery, RentalQuery } from './adapter-interface';
 import {
   ComparableInstance,
@@ -17,29 +21,54 @@ import {
   CostData,
 } from '../types';
 
+const execFileAsync = promisify(execFile);
+
+const DEFAULT_BRIDGE_PATH = path.join(
+  os.homedir(),
+  '.kimi-webbridge',
+  'bin',
+  'kimi-webbridge',
+);
+
+/** 暴露给 CLI 的探测函数：当前环境下是否能找到 webbridge 二进制。 */
+export function isKimiBridgeAvailable(bridgePath?: string): boolean {
+  const fs = require('node:fs');
+  const candidates = [bridgePath ?? DEFAULT_BRIDGE_PATH];
+  if (process.platform === 'win32') candidates.push(candidates[0] + '.exe');
+  return candidates.some((p) => fs.existsSync(p));
+}
+
 export class KimiBridgeAdapter implements DataSourceAdapter {
   /**
    * 数据缓存 TTL（毫秒），默认 24 小时
    */
   private cacheTTL: number;
   private cache: Map<string, { data: unknown; timestamp: number }> = new Map();
+  private bridgePath: string;
 
-  constructor(cacheTTLMs?: number) {
+  constructor(cacheTTLMs?: number, bridgePath?: string) {
     this.cacheTTL = cacheTTLMs ?? 86_400_000; // 24 hours
+    this.bridgePath = bridgePath ?? DEFAULT_BRIDGE_PATH;
   }
 
   /**
    * 通过 Kimi WebBridge skill 获取数据
-   * 在 Claude Code 环境中，通过 Skill tool 调用 kimi-webbridge skill
-   * 此处为接口占位实现，实际运行时由 agent 调用 WebBridge
+   * 在 CI 环境或无 bridge 时抛错；CLI 调用方应回退到 MockAdapter
    */
   private async fetchViaWebBridge(query: string): Promise<string> {
-    // 实际实现：在 Claude Code 中通过 Skill 工具调用
-    // 这里返回 Promise 占位，实际由 agent 在运行时填充
-    throw new Error(
-      'Kimi WebBridge not available in non-agent runtime. ' +
-      'Set up the WebBridge integration or switch to mock adapter.'
-    );
+    try {
+      const { stdout } = await execFileAsync(this.bridgePath, ['fetch', query], {
+        timeout: 30_000,
+        maxBuffer: 10 * 1024 * 1024,
+      });
+      return stdout.trim();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new Error(
+        `Kimi WebBridge fetch failed (bridgePath=${this.bridgePath}): ${message}. ` +
+        'Set up the WebBridge integration or switch to mock adapter.',
+      );
+    }
   }
 
   private getCached<T>(key: string): T | null {
@@ -56,79 +85,62 @@ export class KimiBridgeAdapter implements DataSourceAdapter {
     this.cache.set(key, { data, timestamp: Date.now() });
   }
 
-  async fetchComparables(query: ComparableQuery): Promise<ComparableInstance[]> {
-    const cacheKey = `comparables:${JSON.stringify(query)}`;
-    const cached = this.getCached<ComparableInstance[]>(cacheKey);
+  /**
+   * 通用 fetch 包装：检查缓存 → 调 bridge → 解析 → 写入缓存 → 返回。
+   * 5 个 fetch 方法共用此模式。
+   */
+  private async cached<T>(
+    cacheKey: string,
+    query: string,
+    parse: (raw: string) => T,
+  ): Promise<T> {
+    const cached = this.getCached<T>(cacheKey);
     if (cached) return cached;
+    const raw = await this.fetchViaWebBridge(query);
+    const result = parse(raw);
+    this.setCache(cacheKey, result);
+    return result;
+  }
 
-    // 通过 Kimi WebBridge 从链家/贝壳等平台获取
-    // 首期实现返回空数组 + warning，后续迭代接入真实数据
-    const rawData = await this.fetchViaWebBridge(
+  fetchComparables(query: ComparableQuery): Promise<ComparableInstance[]> {
+    return this.cached(
+      `comparables:${JSON.stringify(query)}`,
       `fetch real estate transaction comparables in ${query.location}, ` +
-      `property type: ${query.propertyType}, subtype: ${query.subType}, ` +
-      `date range: ${query.dateRange?.start.toISOString()} to ${query.dateRange?.end.toISOString()}`
+      `property type: ${query.propertyType}, subtype: ${query.subType}`,
+      (raw) => this.parseComparables(raw, query),
     );
-
-    // 解析 WebBridge 返回的原始数据 -> ComparableInstance[]
-    const instances = this.parseComparables(rawData, query);
-    this.setCache(cacheKey, instances);
-    return instances;
   }
 
-  async fetchRentalData(query: RentalQuery): Promise<RentalData[]> {
-    const cacheKey = `rental:${JSON.stringify(query)}`;
-    const cached = this.getCached<RentalData[]>(cacheKey);
-    if (cached) return cached;
-
-    const rawData = await this.fetchViaWebBridge(
-      `fetch rental data in ${query.location}, property type: ${query.propertyType}`
+  fetchRentalData(query: RentalQuery): Promise<RentalData[]> {
+    return this.cached(
+      `rental:${JSON.stringify(query)}`,
+      `fetch rental data in ${query.location}, property type: ${query.propertyType}`,
+      (raw) => this.parseRentalData(raw),
     );
-
-    const data = this.parseRentalData(rawData);
-    this.setCache(cacheKey, data);
-    return data;
   }
 
-  async fetchMarketIndex(location: string, period: string): Promise<MarketIndex> {
-    const cacheKey = `marketIndex:${location}:${period}`;
-    const cached = this.getCached<MarketIndex>(cacheKey);
-    if (cached) return cached;
-
-    const rawData = await this.fetchViaWebBridge(
-      `fetch market price index for ${location}, period: ${period}`
+  fetchMarketIndex(location: string, period: string): Promise<MarketIndex> {
+    return this.cached(
+      `marketIndex:${location}:${period}`,
+      `fetch market price index for ${location}, period: ${period}`,
+      (raw) => this.parseMarketIndex(raw, location, period),
     );
-
-    const index = this.parseMarketIndex(rawData, location, period);
-    this.setCache(cacheKey, index);
-    return index;
   }
 
-  async fetchBenchmarkLandPrice(zone: string, landUseType: string): Promise<BenchmarkPrice> {
-    const cacheKey = `benchmarkLand:${zone}:${landUseType}`;
-    const cached = this.getCached<BenchmarkPrice>(cacheKey);
-    if (cached) return cached;
-
-    const rawData = await this.fetchViaWebBridge(
-      `fetch benchmark land price for ${zone}, land use: ${landUseType}`
+  fetchBenchmarkLandPrice(zone: string, landUseType: string): Promise<BenchmarkPrice> {
+    return this.cached(
+      `benchmarkLand:${zone}:${landUseType}`,
+      `fetch benchmark land price for ${zone}, land use: ${landUseType}`,
+      (raw) => this.parseBenchmarkPrice(raw, zone, landUseType),
     );
-
-    const price = this.parseBenchmarkPrice(rawData, zone, landUseType);
-    this.setCache(cacheKey, price);
-    return price;
   }
 
-  async fetchCostData(region: string, buildingType: string): Promise<CostData> {
-    const cacheKey = `costData:${region}:${buildingType}`;
-    const cached = this.getCached<CostData>(cacheKey);
-    if (cached) return cached;
-
-    const rawData = await this.fetchViaWebBridge(
-      `fetch construction cost data for ${region}, building type: ${buildingType}`
+  fetchCostData(region: string, buildingType: string): Promise<CostData> {
+    return this.cached(
+      `costData:${region}:${buildingType}`,
+      `fetch construction cost data for ${region}, building type: ${buildingType}`,
+      (raw) => this.parseCostData(raw, region, buildingType),
     );
-
-    const cost = this.parseCostData(rawData, region, buildingType);
-    this.setCache(cacheKey, cost);
-    return cost;
   }
 
   // --- 解析方法（从 WebBridge 返回的原始数据到结构化数据） ---
