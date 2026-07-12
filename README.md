@@ -76,6 +76,9 @@ CLI 环境变量：`SUPER_APPRAISER_DATA=kimi|mock` 强制选择数据源。
 - **多格式报告**：叙述式（7.0.2~7.0.18）+ 表格式，单 component template 文件即改即用
 - **多数据源**：Kimi WebBridge（实时） + Mock（演示），可插拔 `DataSourceAdapter`
 - **中文化金额**：完整 4-段式中文大写（个/拾/佰/仟 + 万/亿/万亿）
+- **结构化 Agent 日志**：decision / failure / retry / output / state_transition（JSONL）
+- **Meta-Control**：检测重复错误/重复劳动/平台期 → 改写 skill/prompt/工作流/评估 → 沙盒 → 失败回滚
+- **并行联网调研方法论**：资料阶段纵向/横向/社区三线计划 + 充分性自检（必须联网，宁可多搜）
 
 ## Skill 列表
 
@@ -121,6 +124,36 @@ new EstimationPipeline({
   // templateLoader: new TemplateLoader(customDir),  // 自定义 mustache 模板覆盖
 });
 ```
+
+## Meta-Control 与调研方法论
+
+```ts
+import {
+  EstimationPipeline,
+  MockAdapter,
+  MetaController,
+  buildResearchPlan,
+  buildLaneAgentPrompt,
+} from 'super-appraiser';
+
+// 全流程 + 结构化日志 + Meta 循环
+const pipeline = new EstimationPipeline({
+  dataSource: new MockAdapter(),
+  logDir: '.super-appraiser/logs',
+  enableMetaLoop: true,
+});
+const { report, logger, research, meta } = await pipeline.runWithTelemetry({ /* ... */ });
+
+// 仅诊断历史 JSONL
+const events = logger.getEvents();
+new MetaController().runCycle(events);
+
+// 并行调研子 Agent prompt
+const plan = buildResearchPlan('望京某小区', '收集可比成交与租金', { complex: true });
+const verticalPrompt = buildLaneAgentPrompt(plan, 'vertical');
+```
+
+详见：`docs/meta-control-loop.md`、`docs/methodology/parallel-web-research.md`。
 
 ## 扩展
 

@@ -68,7 +68,16 @@ This is not useful headless. Use the smoke test or direct invocation instead.
 npx jest
 ```
 
-Expect 24/24 tests passing.
+Expect all tests passing (68+ including meta-control / research / telemetry).
+
+## Meta-Control & research
+
+```bash
+# telemetry API (after build)
+node -e "const {EstimationPipeline,MockAdapter}=require('./dist'); new EstimationPipeline({dataSource:new MockAdapter(),enableMetaLoop:true}).runWithTelemetry({demand:{purpose:'mortgage',valueType:'marketValue',client:{name:'T',type:'individual'},valueDatePoint:{date:new Date(),type:'present'}},estObject:{propertyType:'residential',subType:'apartment',location:{city:'北京',district:'朝阳区',street:'x',community:'y'},area:{constructionArea:90},physical:{structure:'钢筋混凝土',yearBuilt:2015,condition:'完好',decoration:'精装',facilities:[]},rights:{landUseType:'住宅',landUseTermEnd:new Date('2080-01-01'),ownership:'私有',restrictions:[]}}}).then(r=>console.log(r.logger.getEvents().length,r.research?.needsMoreSearch,r.meta?.diagnosis.status))"
+```
+
+Skills: `meta-control`, `research-web-parallel`, updated `data-collection`.
 
 ## Gotchas
 

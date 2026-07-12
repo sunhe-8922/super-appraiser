@@ -33,5 +33,8 @@ yarn-error.log*
 # superpowers SDD scratch
 .superpowers/
 
+# meta-control versions + agent jsonl logs
+.super-appraiser/
+
 # config schema (internal)
 config-schema.json

@@ -45,19 +45,33 @@ export class EstimationStateMachine {
   };
 
   /**
-   * 尝试状态转移
+   * 尝试状态转移；allowed 时更新 currentState
    */
   transition(to: EstimationStage): StateTransition {
+    if (this.currentState === to) {
+      return {
+        from: this.currentState,
+        to,
+        allowed: true,
+        reason: `已在状态 ${to}`,
+      };
+    }
+
     const allowedTargets = this.transitions[this.currentState];
     const allowed = allowedTargets.includes(to);
+    const from = this.currentState;
+
+    if (allowed) {
+      this.currentState = to;
+    }
 
     return {
-      from: this.currentState,
+      from,
       to,
       allowed,
       reason: allowed
-        ? `从 ${this.currentState} 转移到 ${to} 是允许的`
-        : `不允许从 ${this.currentState} 直接转移到 ${to}`,
+        ? `从 ${from} 转移到 ${to} 是允许的`
+        : `不允许从 ${from} 直接转移到 ${to}`,
     };
   }
 
@@ -65,8 +79,8 @@ export class EstimationStateMachine {
    * 检查是否可以转移到指定状态
    */
   canTransition(to: EstimationStage): boolean {
-    const result = this.transition(to);
-    return result.allowed;
+    if (this.currentState === to) return true;
+    return this.transitions[this.currentState].includes(to);
   }
 
   /**
