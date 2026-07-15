@@ -1,0 +1,261 @@
+{
+  "plan": {
+    "subject": "北京朝阳区建国路SOHO现代城（建国路88号）",
+    "question": "为房地产抵押估价收集可比成交、租金、成本与市场指数（GB/T 50291-2015 资料搜集）",
+    "lanes": [
+      "vertical",
+      "horizontal",
+      "community"
+    ],
+    "requireNetwork": true,
+    "preferDepthOverSpeed": true,
+    "arxivRequired": false
+  },
+  "findings": [
+    {
+      "lane": "vertical",
+      "claim": "对象可定位为朝阳建国路88号建国门外 SOHO现代城；多平台标注建成约2000-2003年，开发商北京中鸿天房地产开发有限公司，物业常见绿洲/赛特分业态口径。",
+      "sources": [
+        {
+          "url": "https://bj.lianjia.com/xiaoqu/1111027379505/",
+          "title": "链家小区页",
+          "tier": "secondary"
+        },
+        {
+          "url": "https://esf.fang.com/loupan/1010000232.htm",
+          "title": "房天下",
+          "tier": "secondary"
+        },
+        {
+          "url": "https://bj.jiwu.com/loupan/168252.html",
+          "title": "吉屋",
+          "tier": "secondary"
+        }
+      ],
+      "confidence": "high"
+    },
+    {
+      "lane": "vertical",
+      "claim": "区位属CBD/大望路板块，紧邻地铁大望路站与建国路，商业配套（如SKP）被中介房源描述反复引用。",
+      "sources": [
+        {
+          "url": "https://m.ke.com/news/bj/xiaoqu/1111027379505.html",
+          "title": "贝壳新闻页",
+          "tier": "secondary"
+        },
+        {
+          "url": "https://bj.jiwu.com/loupan/168252.html",
+          "title": "吉屋",
+          "tier": "secondary"
+        }
+      ],
+      "confidence": "high"
+    },
+    {
+      "lane": "vertical",
+      "claim": "国家统计局2026年3月：北京二手住宅价格指数环比100.6（+0.6%），同比91.7（约-8.3%）；新建商品住宅环比100.0、同比97.9。",
+      "sources": [
+        {
+          "url": "https://www.stats.gov.cn/sj/zxfb/202604/t20260416_1963320.html",
+          "title": "国家统计局70城3月",
+          "tier": "primary"
+        }
+      ],
+      "confidence": "high"
+    },
+    {
+      "lane": "vertical",
+      "claim": "中国房价行情等第三方展示2026年6月朝阳区挂牌均价约61162元/㎡（环比-1.1%）；全市挂牌约53678元/㎡。属挂牌口径，非网签成交。",
+      "sources": [
+        {
+          "url": "https://m.creprice.cn/city/bj.html",
+          "title": "中国房价行情北京",
+          "tier": "secondary"
+        }
+      ],
+      "confidence": "medium"
+    },
+    {
+      "lane": "vertical",
+      "claim": "平台展示小区参考均价高度离散：链家/贝壳约3.58万/㎡、安居客约5.19万、吉屋约5.27万、58爱房提及6月约5.34万且同比跌约4%；挂牌不等于成交，混用物业类型风险高。",
+      "sources": [
+        {
+          "url": "https://bj.lianjia.com/xiaoqu/1111027379505/",
+          "title": "链家",
+          "tier": "secondary"
+        },
+        {
+          "url": "https://beijing.anjuke.com/community/view/868318",
+          "title": "安居客",
+          "tier": "secondary"
+        },
+        {
+          "url": "https://bj.jiwu.com/loupan/168252.html",
+          "title": "吉屋",
+          "tier": "secondary"
+        },
+        {
+          "url": "https://mfang.58.com/bj/xinfang/xq100511562/fangjia/",
+          "title": "58爱房走势",
+          "tier": "secondary"
+        }
+      ],
+      "confidence": "medium"
+    },
+    {
+      "lane": "horizontal",
+      "claim": "可比/竞品：富力城（双井/东三环）平台挂牌均价约8.1-8.6万/㎡量级，显著高于SOHO现代城多数展示均价，可作为同城核心区纯住宅改善盘上沿锚。",
+      "sources": [
+        {
+          "url": "https://beijing.anjuke.com/community/view/79902",
+          "title": "安居客富力城A区",
+          "tier": "secondary"
+        },
+        {
+          "url": "https://m.ke.com/bj/xiaoqu/1111027374274",
+          "title": "贝壳富力城C区",
+          "tier": "secondary"
+        }
+      ],
+      "confidence": "medium"
+    },
+    {
+      "lane": "horizontal",
+      "claim": "易混盘后现代城（百子湾）：2004-2008建成；报道称B区部分住宅立项但写字楼定位导致约3.5-4万/㎡洼地，其他住宅6万+——可比选取必须核权属与规划用途。",
+      "sources": [
+        {
+          "url": "https://baike.baidu.com/item/%E5%90%8E%E7%8E%B0%E4%BB%A3%E5%9F%8E%E5%B0%8F%E5%8C%BA/697323",
+          "title": "百度百科后现代城",
+          "tier": "secondary"
+        },
+        {
+          "url": "https://news.sina.cn/sh/2021-01-05/detail-iiznctkf0334351.d.html",
+          "title": "新京报/新浪转载",
+          "tier": "secondary"
+        }
+      ],
+      "confidence": "high"
+    },
+    {
+      "lane": "horizontal",
+      "claim": "贝壳展示在售案例单价约3.37-3.42万/㎡（180-266㎡三居挂牌总价618-898万），与5万+挂牌均价并存，横向比较须分户型楼栋样本。",
+      "sources": [
+        {
+          "url": "https://m.ke.com/news/bj/xiaoqu/1111027379505.html",
+          "title": "贝壳在售摘要",
+          "tier": "secondary"
+        }
+      ],
+      "confidence": "medium"
+    },
+    {
+      "lane": "horizontal",
+      "claim": "租赁线索：房天下展示约180㎡四居业主直租14500元/月；商办向站点展示日租金约5.5-7元/天/㎡——住宅评估与商办租金不可混用。",
+      "sources": [
+        {
+          "url": "https://esf.fang.com/loupan/1010000232.htm",
+          "title": "房天下租售",
+          "tier": "secondary"
+        },
+        {
+          "url": "http://soho-xiandaicheng.cn/",
+          "title": "项目租赁页",
+          "tier": "secondary"
+        }
+      ],
+      "confidence": "medium"
+    },
+    {
+      "lane": "horizontal",
+      "claim": "板块竞品池建议：双井富力城、大望路/百子湾后现代城（慎选）、建外SOHO（同系商住）、国贸CBD其他2000年代塔楼——需现场与权属筛选后进入可比实例表。",
+      "sources": [
+        {
+          "url": "https://bj.lianjia.com/ershoufang/shuangjing/",
+          "title": "链家双井二手",
+          "tier": "secondary"
+        },
+        {
+          "url": "https://zhuanlan.zhihu.com/p/632723680",
+          "title": "知乎双井换房",
+          "tier": "community"
+        }
+      ],
+      "confidence": "medium"
+    },
+    {
+      "lane": "community",
+      "claim": "京报网等报道现代城紧临通惠河北路，交通噪声长期投诉；2019年监测约72.8-74.9dB；居民呼吁隔音墙多年。",
+      "sources": [
+        {
+          "url": "https://wap.bjd.com.cn/news/2021/02/19/50115t280.html",
+          "title": "京报网噪声报道",
+          "tier": "primary"
+        },
+        {
+          "url": "https://www.chinanews.com.cn/sh/2021/02-19/9414042.shtml",
+          "title": "中新网",
+          "tier": "secondary"
+        }
+      ],
+      "confidence": "high"
+    },
+    {
+      "lane": "community",
+      "claim": "知乎专栏指大望路SOHO现代城公司租户多、影响品质、高租售比产品居住体验差、房价难涨的社区叙事。",
+      "sources": [
+        {
+          "url": "https://zhuanlan.zhihu.com/p/346712077",
+          "title": "知乎高租售比讨论",
+          "tier": "community"
+        }
+      ],
+      "confidence": "medium"
+    },
+    {
+      "lane": "community",
+      "claim": "中介/投资向内容提示SOHO现代城偏办公基因、新手谨慎；平台挂牌同比约-7%至-8%量级（安居客等抓取时点）。",
+      "sources": [
+        {
+          "url": "https://www.163.com/dy/article/FSHD30UD0535968V.html",
+          "title": "网易号中介观点",
+          "tier": "community"
+        },
+        {
+          "url": "https://beijing.anjuke.com/community/view/868318",
+          "title": "安居客",
+          "tier": "secondary"
+        }
+      ],
+      "confidence": "medium"
+    }
+  ],
+  "sufficiency": [
+    {
+      "id": "vertical_story",
+      "question": "纵向：能讲出一个完整故事吗？有没有明显信息断层？",
+      "passed": true
+    },
+    {
+      "id": "horizontal_coverage",
+      "question": "横向：竞品/可比列表完整吗？每个对象信息够对比吗？",
+      "passed": true
+    },
+    {
+      "id": "source_reliability",
+      "question": "来源：关键事实有可靠来源支撑吗？是否单源下判断？",
+      "passed": true
+    }
+  ],
+  "needsMoreSearch": false,
+  "meta": {
+    "run_id": "research-soho-xd-20260715",
+    "log_path": "C:\\Users\\66434\\Documents\\Codex\\super-appraiser\\.super-appraiser\\logs\\agent-research-soho-xd-20260715.jsonl",
+    "generated_at": "2026-07-15T11:19:00.973Z",
+    "subagents": {
+      "vertical": "failed_rate_limit",
+      "horizontal": "failed_rate_limit",
+      "community": "ok"
+    },
+    "host_fill": "vertical+horizontal completed by host web search/fetch"
+  }
+}
